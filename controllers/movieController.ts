@@ -9,8 +9,12 @@ interface AuthRequest extends Request {
 
 export const addMovie = async (req: AuthRequest, res: Response) => {
   try {
+    const data = req.body;
     const movie = await prisma.movie.create({
-      data: { ...req.body, createdById: req.userId! },
+      data: {
+        ...data,
+        createdById: req.userId!, // user ID from verifyToken middleware
+      },
     });
     res.status(201).json(movie);
   } catch (err: any) {
@@ -19,18 +23,21 @@ export const addMovie = async (req: AuthRequest, res: Response) => {
 };
 
 export const getMovies = async (req: Request, res: Response) => {
+  const userId = parseInt(req.query.userId as string);
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 10;
-  const skip = (page - 1) * limit;
+
+  if (!userId) return res.status(400).json({ message: "User ID missing" });
 
   try {
+    const skip = (page - 1) * limit;
     const movies = await prisma.movie.findMany({
+      where: { createdById: userId },
+      orderBy: { createdAt: "desc" },
       skip,
       take: limit,
-      orderBy: { createdAt: "desc" },
-      include: { createdBy: { select: { username: true, email: true } } },
     });
-    res.json(movies);
+    res.json(movies); // Must be JSON array
   } catch (err: any) {
     res.status(500).json({ message: err.message });
   }
@@ -39,11 +46,13 @@ export const getMovies = async (req: Request, res: Response) => {
 export const updateMovie = async (req: AuthRequest, res: Response) => {
   const id = parseInt(req.params.id);
   try {
-    const updated = await prisma.movie.update({
-      where: { id },
+    const movie = await prisma.movie.updateMany({
+      where: { id, createdById: req.userId! },
       data: req.body,
     });
-    res.json(updated);
+    if (movie.count === 0)
+      return res.status(404).json({ message: "Movie not found" });
+    res.json({ message: "Movie updated" });
   } catch (err: any) {
     res.status(500).json({ message: err.message });
   }
@@ -52,8 +61,12 @@ export const updateMovie = async (req: AuthRequest, res: Response) => {
 export const deleteMovie = async (req: AuthRequest, res: Response) => {
   const id = parseInt(req.params.id);
   try {
-    await prisma.movie.delete({ where: { id } });
-    res.json({ message: "Movie deleted successfully" });
+    const movie = await prisma.movie.deleteMany({
+      where: { id, createdById: req.userId! },
+    });
+    if (movie.count === 0)
+      return res.status(404).json({ message: "Movie not found" });
+    res.json({ message: "Movie deleted" });
   } catch (err: any) {
     res.status(500).json({ message: err.message });
   }

@@ -2,12 +2,19 @@ import express from "express";
 import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes";
 import movieRoutes from "./routes/movieRoutes";
+import cors from "cors";
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
 
+app.use(
+  cors({
+    origin: "http://localhost:5173", // your React dev URL
+    credentials: true,
+  })
+);
 app.use("/api/auth", authRoutes);
 app.use("/api/movies", movieRoutes);
 
