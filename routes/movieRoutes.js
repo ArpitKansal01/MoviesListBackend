@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const movieController_1 = require("../controllers/movieController");
+const auth_1 = require("../middleware/auth");
+const router = (0, express_1.Router)();
+router.post("/", auth_1.verifyToken, movieController_1.addMovie);
+router.get("/", movieController_1.getMovies);
+router.put("/:id", auth_1.verifyToken, movieController_1.updateMovie);
+router.delete("/:id", auth_1.verifyToken, movieController_1.deleteMovie);
+exports.default = router;
