@@ -11,7 +11,7 @@ app.use(express.json());
 
 app.use(
   cors({
-    origin: "https://movies-list-frontend.vercel.app/", // your React dev URL
+    origin: "https://movies-list-frontend.vercel.app", // your React dev URL
     credentials: true,
   })
 );
